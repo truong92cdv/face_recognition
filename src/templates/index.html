@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Face Recognition LBPH</title>
+<style>
+body { font-family: Arial; background:#111; color:#eee; text-align:center; }
+img { border:4px solid #0f0; border-radius:10px; }
+button { padding:10px 20px; margin:5px; font-size:16px; }
+input { padding:10px; font-size:16px; }
+#status { margin-top:10px; font-size:18px; }
+</style>
+</head>
+
+<body>
+<h2>Face Recognition (LBPH)</h2>
+
+<img src="/video_feed" width="640"><br><br>
+
+<input id="name" placeholder="User name">
+<br><br>
+
+<button onclick="capture()">Capture Face</button>
+<button onclick="train()">Train Model</button>
+
+<div id="status"></div>
+
+<script>
+let timer = null;
+
+function capture() {
+    const name = document.getElementById("name").value;
+    if (!name) return alert("Enter name!");
+
+    fetch("/capture", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({name:name})
+    });
+
+    timer = setInterval(updateStatus, 300);
+}
+
+function updateStatus() {
+    fetch("/capture_status")
+    .then(r=>r.json())
+    .then(d=>{
+        document.getElementById("status").innerText =
+            `CAPTURE: ${d.count}/50`;
+
+        if (!d.running) {
+            clearInterval(timer);
+            document.getElementById("status").innerText += " ✅ DONE";
+        }
+    });
+}
+
+function train() {
+    document.getElementById("status").innerText = "Training...";
+    fetch("/train",{method:"POST"})
+    .then(r=>r.json())
+    .then(d=>{
+        document.getElementById("status").innerText =
+            d.status === "ok" ? "Training DONE ✅" : "No face!";
+    });
+}
+</script>
+</body>
+</html>
